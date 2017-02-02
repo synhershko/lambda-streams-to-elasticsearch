@@ -139,7 +139,7 @@ function onCompletion(context, event, err, status, message) {
         context.done(null, message);
     }
 }
-exports.onCompletion = onCompletion
+exports.onCompletion = onCompletion;
 
 /** AWS Lambda event handler */
 function handler(event, context) {
@@ -312,9 +312,8 @@ exports.buildDeliveryMap = buildDeliveryMap;
 
 /**
  * Convenience function which generates the batch set with low and high offsets
- * for pushing data to Firehose in blocks of FIREHOSE_MAX_BATCH_COUNT and
- * staying within the FIREHOSE_MAX_BATCH_BYTES max payload size. Batch ranges
- * are calculated to be compatible with the array.slice() function which uses a
+ * for pushing data to Elasticsearch in blocks of FIREHOSE_MAX_BATCH_COUNT
+ * Batch ranges are calculated to be compatible with the array.slice() function which uses a
  * non-inclusive upper bound
  */
 function getBatchRanges(records) {
@@ -335,7 +334,7 @@ function getBatchRanges(records) {
 
         // generate a new batch marker every 4MB or 500 records, whichever comes
         // first
-        if (batchCurrentCount === FIREHOSE_MAX_BATCH_COUNT || batchCurrentBytes + recordSize > FIREHOSE_MAX_BATCH_BYTES || i === records.length - 1) {
+        if (batchCurrentCount === ELASTICSEARCH_MAX_BATCH_COUNT || i === records.length - 1) {
             batches.push({
                 lowOffset : currentLowOffset,
                 // annoying special case handling for record sets of size 1
