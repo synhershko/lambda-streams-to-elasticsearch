@@ -14,7 +14,7 @@
  limitations under the License.
  */
 
-var debug = false;
+var debug = process.env['DEBUG_ENABLED'] || false;
 
 var pjson = require('./package.json');
 var setRegion = process.env['AWS_REGION'];
@@ -282,6 +282,7 @@ function buildDeliveryMap(streamName, serviceName, context, event, callback) {
         // This could be indicative of debug usage.
         exports.verifyDeliveryStreamMapping(streamName, false, event, callback);
     } else {
+        console.log('Trying to get list of tags of stream ' + streamName);
         // get the delivery stream name from Kinesis tag
         exports.kinesis.listTagsForStream({
             StreamName : streamName
@@ -290,6 +291,7 @@ function buildDeliveryMap(streamName, serviceName, context, event, callback) {
             if (err) {
                 exports.onCompletion(context, event, err, ERROR, "Unable to List Tags for Stream");
             } else {
+                console.log('Got tags of stream ' + streamName);
                 // grab the tag value if it's the foreward_to_elasticsearch
                 // name item
                 data.Tags.map(function(item) {
