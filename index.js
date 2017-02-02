@@ -431,7 +431,7 @@ exports.processEvent = processEvent;
 
 function writeToElasticsearch(items, streamName, deliveryStreamName, callback) {
     var startTime = new Date();
-    var indexName = 'logstash-' + startTime.toISOString().slice(0,10); // TODO configurable index prefix name
+    var indexName = 'logstash-' + startTime.toISOString().slice(0,10).replace('-', '.'); // TODO configurable index prefix name
 
     var body = [];
     items.map(function(item) {
