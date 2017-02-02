@@ -86,7 +86,7 @@ function init() {
         }
 
         if (debug) {
-            console.log("AWS Streams to Firehose Forwarder v" + pjson.version + " in " + setRegion);
+            console.log("AWS Streams to Elasticsearch Forwarder v" + pjson.version + " in " + setRegion);
         }
 
         aws.config.update({
@@ -371,6 +371,12 @@ function processEvent(event, serviceName, streamName, callback) {
         console.log("Forwarding " + event.Records.length + " " + serviceName + " records to Delivery Stream " + deliveryStreamName);
     }
 
+    if (!exports.es_client) {
+        exports.es_client = new elasticsearch.Client({
+            host: elasticsearchDestinations[streamName]
+        });
+    }
+
     async.map(event.Records, function(record, recordCallback) {
         // resolve the record data based on the service
         if (serviceName === KINESIS_SERVICE_NAME) {
@@ -438,12 +444,12 @@ function writeToElasticsearch(items, streamName, deliveryStreamName, callback) {
     var body = [];
     items.map(function(item) {
         body.push({ index:  { _index: indexName, _type: 'impressions' } });
-        body.push(item); // item is assumed to be JSON
+        body.push(JSON.parse(item)); // item is assumed to be JSON
     });
 
     if (debug) {
         console.log('Writing to Elasticsearch');
-        console.log(JSON.stringify(items));
+        console.log(JSON.stringify(body));
     }
 
     // bulk API docs at https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/api-reference.html
