@@ -139,6 +139,7 @@ function onCompletion(context, event, err, status, message) {
         context.done(null, message);
     }
 }
+exports.onCompletion = onCompletion
 
 /** AWS Lambda event handler */
 function handler(event, context) {
@@ -289,7 +290,7 @@ function buildDeliveryMap(streamName, serviceName, context, event, callback) {
             if (err) {
                 exports.onCompletion(context, event, err, ERROR, "Unable to List Tags for Stream");
             } else {
-                // grab the tag value if it's the foreward_to_firehose
+                // grab the tag value if it's the foreward_to_elasticsearch
                 // name item
                 data.Tags.map(function(item) {
                     if (item.Key === FORWARD_TO_ELASTICSEARCH_DNS) {
