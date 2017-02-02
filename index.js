@@ -429,7 +429,7 @@ function processEvent(event, serviceName, streamName, callback) {
 }
 exports.processEvent = processEvent;
 
-function writeToElasticsearch(items, callback) {
+function writeToElasticsearch(items, streamName, deliveryStreamName, callback) {
     var startTime = new Date();
     var indexName = 'logstash-' + startTime.toISOString().slice(0,10); // TODO configurable index prefix name
 
@@ -491,13 +491,7 @@ function processFinalRecords(records, streamName, deliveryStreamName, callback) 
         // firehose
         var processRecords = records.slice(item.lowOffset, item.highOffset);
 
-        // decorate the array for the Firehose API
-        var decorated = [];
-        processRecords.map(function(item) {
-            decorated.push(item); // item is assumed to be JSON
-        });
-
-        exports.writeToFirehose(decorated, streamName, deliveryStreamName, function(err) {
+        exports.writeToElasticsearch(processRecords, streamName, deliveryStreamName, function(err) {
             if (err) {
                 reduceCallback(err, successCount);
             } else {
