@@ -196,6 +196,10 @@ function handler(event, context) {
             }
         });
 
+        if (process.env['ELASTICSEARCH_HOST']) {
+            elasticsearchDestinations[streamName] = process.env['ELASTICSEARCH_HOST'];
+        }
+
         if (elasticsearchDestinations.length === 0 || !elasticsearchDestinations[streamName]) {
             // no delivery stream cached so far, so add this stream's tag value
             // to the delivery map, and continue with processEvent
