@@ -27,7 +27,6 @@ exports.jsonToStringTransformer = jsonToStringTransformer;
 
 /** literally nothing at all transformer - just wrap the object in a buffer */
 function doNothingTransformer(data, callback) {
-    // emitting a new buffer as text with newline
     callback(null, new Buffer(data));
 };
 exports.doNothingTransformer = doNothingTransformer;

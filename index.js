@@ -115,22 +115,24 @@ function getStreamName(arn) {
         var eventSourceARNTokens = arn.split(":");
         return eventSourceARNTokens[5].split("/")[1];
     } catch (e) {
-        console.log("Malformed Kinesis Stream ARN");
+        console.error("Malformed Kinesis Stream ARN");
     }
 }
 exports.getStreamName = getStreamName;
 
 function onCompletion(context, event, err, status, message) {
-    console.log("Processing Complete");
+    if (debug) {
+        console.log("Processing Complete");
+    }
 
     if (err) {
-        console.log(err);
+        console.error(err);
     }
 
     // log the event if we've failed
     if (status !== OK) {
         if (message) {
-            console.log(message);
+            console.error(message);
         }
 
         // ensure that Lambda doesn't checkpoint to kinesis on error
@@ -282,7 +284,10 @@ function buildDeliveryMap(streamName, serviceName, context, event, callback) {
         // This could be indicative of debug usage.
         exports.verifyDeliveryStreamMapping(streamName, false, event, callback);
     } else {
-        console.log('Trying to get list of tags of stream ' + streamName);
+        if (debug) {
+            console.log('Trying to get list of tags of stream ' + streamName);
+        }
+
         // get the delivery stream name from Kinesis tag
         exports.kinesis.listTagsForStream({
             StreamName : streamName
@@ -291,7 +296,10 @@ function buildDeliveryMap(streamName, serviceName, context, event, callback) {
             if (err) {
                 exports.onCompletion(context, event, err, ERROR, "Unable to List Tags for Stream");
             } else {
-                console.log('Got tags of stream ' + streamName);
+                if (debug) {
+                    console.log('Got tags of stream ' + streamName);
+                }
+
                 // grab the tag value if it's the foreward_to_elasticsearch
                 // name item
                 data.Tags.map(function(item) {
@@ -361,9 +369,6 @@ exports.getBatchRanges = getBatchRanges;
  * which can determine the delivery stream dynamically if needed
  */
 function processEvent(event, serviceName, streamName, callback) {
-    if (debug) {
-        console.log('Processing event');
-    }
     // look up the delivery stream name of the mapping cache
     var deliveryStreamName = elasticsearchDestinations[streamName];
 
@@ -457,10 +462,17 @@ function writeToElasticsearch(items, streamName, deliveryStreamName, callback) {
         body: body
     }, function (err, resp) {
         if (err) {
-            console.log(JSON.stringify(err));
+            console.error(JSON.stringify(err));
             callback(err);
         } else {
-            // TODO verify resp and no batch failures
+            if (resp.errors === true) {
+                if (debug) {
+                    console.log(JSON.stringify(resp));
+                }
+                callback('Bulk request to Elasticsearch failed with errors, please check the logs - your data may be malformed')
+                return;
+            }
+
             if (debug) {
                 var elapsedMs = new Date().getTime() - startTime.getTime();
                 console.log("Successfully wrote " + items.length + " records to Elasticsearch in " + elapsedMs + " ms");
@@ -496,7 +508,7 @@ function processFinalRecords(records, streamName, deliveryStreamName, callback) 
         }
 
         // grab subset of the records assigned for this batch and push to
-        // firehose
+        // elasticsearch
         var processRecords = records.slice(item.lowOffset, item.highOffset);
 
         exports.writeToElasticsearch(processRecords, streamName, deliveryStreamName, function(err) {
@@ -508,7 +520,7 @@ function processFinalRecords(records, streamName, deliveryStreamName, callback) 
         });
     }, function(err, successfulBatches) {
         if (err) {
-            console.log("Forwarding failure after " + successfulBatches + " successful batches");
+            console.error("Forwarding failure after " + successfulBatches + " successful batches");
             callback(err);
         } else {
             console.log("Event forwarding complete. Forwarded " + successfulBatches + " batches comprising " + records.length + " records to Firehose " + deliveryStreamName);
