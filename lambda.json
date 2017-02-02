@@ -1,0 +1,25 @@
+{
+  "lambda": {
+    "FunctionName": "kinesis-stream-to-elasticsearch",
+    "Handler": "index.handler",
+    "Runtime": "nodejs",
+    "Description": "Blueprint which enables forwarding Kinesis Streams data to Elasticsearch",
+    "MemorySize": 128,
+    "Timeout": 60
+  },
+  "eventSources": {
+    "kinesis": [
+      {}
+    ]
+  },
+  "version": "1.0.0",
+  "build": "KinesisStreamToElasticsearch.zip",
+  "license": "Apache-2.0",
+  "tags": [
+    "nodejs",
+    "kinesis",
+    "lambda",
+    "elasticsearch"
+  ],
+  "private": false
+}
